@@ -24,8 +24,8 @@ const displayCategories = (categories) => {
         //create a button
         const buttonContainer = document.createElement("div");
         buttonContainer.innerHTML =
-        `
-        <button onclick = "loadCategoryvidoes(${item.category_id})"class="btn">
+            `
+        <button id="btn-${item.category_id}" onclick = "loadCategoryvidoes(${item.category_id})"class="btn category-btn">
             ${item.category}
         </button>
         `
@@ -38,7 +38,14 @@ const displayCategories = (categories) => {
 const loadCategoryvidoes = (id) => {
     fetch(`https://openapi.programming-hero.com/api/phero-tube/category/${id}`)
         .then((res) => res.json())
-        .then((data) => videoDisplay(data.category))
+        .then((data) => {
+            //Remove all the active class
+            removeActiveClass();
+            //Active class with id
+            const activeBtn = document.getElementById(`btn-${id}`);
+            activeBtn.classList.add("active")
+            videoDisplay(data.category)
+        })
         .catch((error) => console.log(error))
 }
 
@@ -63,21 +70,46 @@ const demoObject = {
 
 function timeStringConverter(time) {
     // const years =  parseInt(time/)
-    const months = parseInt (time / (86400*30))
-    let remainingSeconds = time % (86400*30);
-    const days = parseInt (remainingSeconds / 86400);
+    const months = parseInt(time / (86400 * 30))
+    let remainingSeconds = time % (86400 * 30);
+    const days = parseInt(remainingSeconds / 86400);
     remainingSeconds = remainingSeconds % 86400;
-    const hours = parseInt (remainingSeconds / 3600);
+    const hours = parseInt(remainingSeconds / 3600);
     remainingSeconds = remainingSeconds % 3600;
-    const munites = parseInt (remainingSeconds / 60);
+    const munites = parseInt(remainingSeconds / 60);
     remainingSeconds = remainingSeconds % 60;
     return `${days} d ${hours} h ${munites} m ${remainingSeconds} s ago`;
 };
+
+//Active class remove function
+const removeActiveClass = () => {
+    const buttons = document.getElementsByClassName("category-btn");
+    for (let btn of buttons) {
+        btn.classList.remove("active");
+    }
+}
 
 // create videoDisplay
 const videoDisplay = (videos) => {
     const videoContainer = document.getElementById("videos");
     videoContainer.innerHTML = "";
+
+    if (videos.length === 0) {
+        videoContainer.classList.remove("grid");
+        videoContainer.innerHTML = `
+        <div class = "min-h-[400px] flex flex-col gap-5 justify-center items-center">
+        <img src="assets/Icon.png" />
+        <h2 class="text-center text-xl font-bold">
+        No Content here in this Category
+        </h2>
+        </div>
+        `;
+        return 0;
+    }
+    else {
+        videoContainer.classList.add("grid");
+    }
+
     videos.forEach(video => {
         console.log(video);
         const card = document.createElement("div");
@@ -88,9 +120,8 @@ const videoDisplay = (videos) => {
       src=${video.thumbnail}
       class = "h-full  w-full object-cover"
       alt="video.title" />
-      ${
-        video.others.posted_date?.length === 0 ? "" : `<span class = "absolute text-xs right-2 bottom-2 bg-black text-white rounded p-1">${timeStringConverter(video.others.posted_date)}</span>`
-      }
+      ${video.others.posted_date?.length === 0 ? "" : `<span class = "absolute text-xs right-2 bottom-2 bg-black text-white rounded p-1">${timeStringConverter(video.others.posted_date)}</span>`
+            }
   </figure>
   <div class="px-0 py-2 flex items-center">
   <div>
@@ -101,7 +132,7 @@ const videoDisplay = (videos) => {
   <div class ="flex items-center gap-2">
   <p class = "text-gray-400">${video.authors[0].profile_name}</p>
     ${video.authors[0].verified ? `<img class ="w-5" src="https://img.icons8.com/?size=96&id=D9RtvkuOe31p&format=png"/>` : ""}
-  <p></p>
+  <p><button class="btn btn-sm btn-error">Details</button></p>
   </div>
   </div>
   </div>
