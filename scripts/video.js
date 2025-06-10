@@ -16,6 +16,48 @@ const loadVidoes = () => {
         .then((data) => videoDisplay(data.videos))
         .catch((error) => console.log(error))
 }
+// create loadCategoryVidoes
+const loadCategoryvidoes = (id) => {
+    fetch(`https://openapi.programming-hero.com/api/phero-tube/category/${id}`)
+        .then((res) => res.json())
+        .then((data) => {
+            //Remove all the active class
+            removeActiveClass();
+            //Active class with id
+            const activeBtn = document.getElementById(`btn-${id}`);
+            activeBtn.classList.add("active")
+            videoDisplay(data.category)
+        })
+        .catch((error) => console.log(error))
+}
+// create loadDetails 
+const loadDetails = async (videoId) => {
+    // console.log(videoId);
+    const url = `https://openapi.programming-hero.com/api/phero-tube/video/${videoId}`;
+    const res = await fetch (url);
+    const data = await res.json();
+    // console.log(data);
+    displayDetails(data.video);
+}
+
+// create a displayDetails 
+const displayDetails = (video) => {
+    // console.log(video);
+    const detailsContainer = document.getElementById("modal-content");
+
+    detailsContainer.innerHTML = `
+    <div>
+    <img src="${video.thumbnail}" alt="video.thumbnail" />
+    </div>
+    <p>${video.description}</p>
+    `;
+
+    // Way 1
+    // document.getElementById("showModalData").click();
+
+    // Way 2
+    document.getElementById("customModal").showModal();
+}
 // create displayCategories
 const displayCategories = (categories) => {
     const categoryContainer = document.getElementById("categories")
@@ -35,19 +77,6 @@ const displayCategories = (categories) => {
     });
 }
 
-const loadCategoryvidoes = (id) => {
-    fetch(`https://openapi.programming-hero.com/api/phero-tube/category/${id}`)
-        .then((res) => res.json())
-        .then((data) => {
-            //Remove all the active class
-            removeActiveClass();
-            //Active class with id
-            const activeBtn = document.getElementById(`btn-${id}`);
-            activeBtn.classList.add("active")
-            videoDisplay(data.category)
-        })
-        .catch((error) => console.log(error))
-}
 
 const demoObject = {
     "category_id": "1003",
@@ -132,7 +161,7 @@ const videoDisplay = (videos) => {
   <div class ="flex items-center gap-2">
   <p class = "text-gray-400">${video.authors[0].profile_name}</p>
     ${video.authors[0].verified ? `<img class ="w-5" src="https://img.icons8.com/?size=96&id=D9RtvkuOe31p&format=png"/>` : ""}
-  <p><button class="btn btn-sm btn-error">Details</button></p>
+  <p><button onclick = "loadDetails('${video.video_id}')" class="btn btn-sm btn-error">Details</button></p>
   </div>
   </div>
   </div>
