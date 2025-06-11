@@ -17,19 +17,38 @@ const loadVidoes = (searchInput = "") => {
         .catch((error) => console.log(error))
 }
 // create loadCategoryVidoes
+// const loadCategoryvidoes = (id) => {
+//     fetch(`https://openapi.programming-hero.com/api/phero-tube/category/${id}`)
+//         .then((res) => res.json())
+//         .then((data) => {
+//             //Remove all the active class
+//             removeActiveClass();
+//             //Active class with id
+//             const activeBtn = document.getElementById(`btn-${id}`);
+//             activeBtn.classList.add("active")
+//             videoDisplay(data.category)
+//         })
+//         .catch((error) => console.log(error))
+// }
+// Modify loadCategoryvidoes function to apply sorting by views
 const loadCategoryvidoes = (id) => {
     fetch(`https://openapi.programming-hero.com/api/phero-tube/category/${id}`)
         .then((res) => res.json())
         .then((data) => {
-            //Remove all the active class
+            // Remove active class from all buttons
             removeActiveClass();
-            //Active class with id
+
+            // Add active class to the clicked button
             const activeBtn = document.getElementById(`btn-${id}`);
-            activeBtn.classList.add("active")
-            videoDisplay(data.category)
+            activeBtn.classList.add("active");
+
+            // Sort the videos by views before displaying them
+            const sortedVideos = sortVideosByViews(data.category);  // Sort by views (Descending)
+            videoDisplay(sortedVideos);  // Display the sorted videos
         })
-        .catch((error) => console.log(error))
-}
+        .catch((error) => console.log(error));
+};
+
 // create loadDetails 
 const loadDetails = async (videoId) => {
     // console.log(videoId);
@@ -176,6 +195,34 @@ document.getElementById("search-input").addEventListener("keyup", (e) => {
     loadVidoes(e.target.value);
 })
 
+// Function to parse view counts (K, M to numerical values)
+function parseViews(views) {
+    if (views.includes("K")) {
+        return parseFloat(views.replace("K", "")) * 1000;
+    } else if (views.includes("M")) {
+        return parseFloat(views.replace("M", "")) * 1000000;
+    }
+    return parseInt(views); // Default case if views is a plain number
+}
+
+// Sort videos by views (Descending order)
+function sortVideosByViews(videos) {
+    return videos.sort((a, b) => parseViews(b.others.views) - parseViews(a.others.views));  // Sort by views (Descending)
+}
+
+// Add event listener to the "Sort" button
+document.querySelector(".sort .btn").addEventListener("click", () => {
+    // Fetch the video data from the API
+    fetch('https://openapi.programming-hero.com/api/phero-tube/videos')
+        .then(response => response.json())
+        .then(data => {
+            const sortedVideos = sortVideosByViews(data.videos);  // Sort the videos by views
+            videoDisplay(sortedVideos);  // Display the sorted videos
+        })
+        .catch(error => {
+            console.error('Error fetching videos:', error);
+        });
+});
 
 loadCatagories();
 loadVidoes();
