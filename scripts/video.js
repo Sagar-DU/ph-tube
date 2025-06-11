@@ -1,5 +1,9 @@
 // Featch, Load and Show Catagories on HTML 
 
+// Global variable to store currently displayed videos
+let currentVideos = [];
+let currentCategoryId = null;
+
 // create  loadCatagories
 const loadCatagories = () => {
     //fetch the data
@@ -8,29 +12,21 @@ const loadCatagories = () => {
         .then((data) => displayCategories(data.categories))
         .catch((error) => console.log(error))
 }
+
 // create  loadVidoes
 const loadVidoes = (searchInput = "") => {
     //fetch the data
     fetch(`https://openapi.programming-hero.com/api/phero-tube/videos?title=${searchInput}`)
         .then((res) => res.json())
-        .then((data) => videoDisplay(data.videos))
+        .then((data) => {
+            currentVideos = data.videos; // Store current videos
+            currentCategoryId = null; // Reset category
+            videoDisplay(data.videos);
+        })
         .catch((error) => console.log(error))
 }
-// create loadCategoryVidoes
-// const loadCategoryvidoes = (id) => {
-//     fetch(`https://openapi.programming-hero.com/api/phero-tube/category/${id}`)
-//         .then((res) => res.json())
-//         .then((data) => {
-//             //Remove all the active class
-//             removeActiveClass();
-//             //Active class with id
-//             const activeBtn = document.getElementById(`btn-${id}`);
-//             activeBtn.classList.add("active")
-//             videoDisplay(data.category)
-//         })
-//         .catch((error) => console.log(error))
-// }
-// Modify loadCategoryvidoes function to apply sorting by views
+
+// Modified loadCategoryvidoes function
 const loadCategoryvidoes = (id) => {
     fetch(`https://openapi.programming-hero.com/api/phero-tube/category/${id}`)
         .then((res) => res.json())
@@ -42,9 +38,11 @@ const loadCategoryvidoes = (id) => {
             const activeBtn = document.getElementById(`btn-${id}`);
             activeBtn.classList.add("active");
 
-            // Sort the videos by views before displaying them
-            const sortedVideos = sortVideosByViews(data.category);  // Sort by views (Descending)
-            videoDisplay(sortedVideos);  // Display the sorted videos
+            // Store current videos and category
+            currentVideos = data.category;
+            currentCategoryId = id;
+            
+            videoDisplay(data.category);
         })
         .catch((error) => console.log(error));
 };
@@ -77,6 +75,7 @@ const displayDetails = (video) => {
     // Way 2
     document.getElementById("customModal").showModal();
 }
+
 // create displayCategories
 const displayCategories = (categories) => {
     const categoryContainer = document.getElementById("categories")
@@ -95,7 +94,6 @@ const displayCategories = (categories) => {
 
     });
 }
-
 
 const demoObject = {
     "category_id": "1003",
@@ -187,7 +185,6 @@ const videoDisplay = (videos) => {
         `
         videoContainer.append(card);
     })
-
 }
 
 document.getElementById("search-input").addEventListener("keyup", (e) => {
@@ -197,31 +194,32 @@ document.getElementById("search-input").addEventListener("keyup", (e) => {
 
 // Function to parse view counts (K, M to numerical values)
 function parseViews(views) {
+    if (!views) return 0;
     if (views.includes("K")) {
         return parseFloat(views.replace("K", "")) * 1000;
     } else if (views.includes("M")) {
         return parseFloat(views.replace("M", "")) * 1000000;
     }
-    return parseInt(views); // Default case if views is a plain number
+    return parseInt(views) || 0; // Default case if views is a plain number
 }
 
-// Sort videos by views (Descending order)
-function sortVideosByViews(videos) {
-    return videos.sort((a, b) => parseViews(b.others.views) - parseViews(a.others.views));  // Sort by views (Descending)
+// Sort videos by views (Descending order) - now works on current videos
+function sortVideosByViews() {
+    if (!currentVideos || currentVideos.length === 0) {
+        console.log("No videos to sort");
+        return;
+    }
+    
+    const sortedVideos = [...currentVideos].sort((a, b) => {
+        return parseViews(b.others.views) - parseViews(a.others.views);
+    });
+    
+    videoDisplay(sortedVideos);
 }
 
-// Add event listener to the "Sort" button
+// FIXED: Add event listener to the "Sort" button - now sorts current videos instead of fetching all
 document.querySelector(".sort .btn").addEventListener("click", () => {
-    // Fetch the video data from the API
-    fetch('https://openapi.programming-hero.com/api/phero-tube/videos')
-        .then(response => response.json())
-        .then(data => {
-            const sortedVideos = sortVideosByViews(data.videos);  // Sort the videos by views
-            videoDisplay(sortedVideos);  // Display the sorted videos
-        })
-        .catch(error => {
-            console.error('Error fetching videos:', error);
-        });
+    sortVideosByViews(); // This will sort whatever videos are currently displayed
 });
 
 loadCatagories();
